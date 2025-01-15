@@ -14,7 +14,8 @@ jacobi(double ***f, double ***u, double ***u_2, int N, int iter_max, double tole
     while(iter < iter_max) {
         diff = 0.0;
         iter++;
-        pragma omp parallel for
+        #pragma omp parallel for default(none) shared(f, u, u_2, delta_2, N)
+        //#pragma omp parallel for
         for(int i = 1; i < N-1; i++) {
             for(int j = 1; j < N-1; j++) {
                 for(int k = 1; k < N-1; k++) {
