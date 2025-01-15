@@ -29,6 +29,5 @@ jacobi(double ***f, double ***u, double ***u_2, int N, int iter_max, double tole
         temp = u;
         u = u_2;
         u_2 = temp;
-        printf("diff: %f\n", diff*div);
     }
 }
