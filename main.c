@@ -6,6 +6,8 @@
 #include "alloc3d.h"
 #include "print.h"
 #include <omp.h>
+#include <time.h>
+
 
 #ifdef _JACOBI
 #include "jacobi.h"
@@ -32,6 +34,11 @@ main(int argc, char *argv[]) {
     double 	***f = NULL;
 
     double MIN_RUNTIME = 3.0; // in seconds
+
+
+    // For wall-clock time measurements
+    struct timespec wc_start, wc_end;
+    double wc_elapsed_time;
 
 
     /* get the paramters from the command line */
@@ -80,7 +87,9 @@ main(int argc, char *argv[]) {
 
         // --------Calculation-----------
         #ifdef _JACOBI
+        clock_gettime(CLOCK_MONOTONIC, &wc_start);
         jacobi(f, u, u_2, N+2, iter_max, tolerance);
+        clock_gettime(CLOCK_MONOTONIC, &wc_end);
         #endif
 
         #ifdef _GAUSS_SEIDEL
@@ -109,6 +118,9 @@ main(int argc, char *argv[]) {
     #endif
 
     printf("%d\t%d\t%f\t%f\t%f\n", N, mem_footprint, cpu_time_prep / reps, cpu_time_calc / reps, Mlups);
+    wc_elapsed_time = (wc_end.tv_sec - wc_start.tv_sec) + (wc_end.tv_nsec - wc_start.tv_nsec) / 1e9;
+    printf("Elapsed time for jaccobi function: %f seconds\n\n", wc_elapsed_time);
+
 
     // dump  results if wanted 
     switch(output_type) {
