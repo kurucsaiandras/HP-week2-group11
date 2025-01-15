@@ -1,0 +1,59 @@
+#!/bin/bash
+# 02614 - High-Performance Computing, January 2022
+# 
+# batch script to run matmult on a decidated server in the hpcintro
+# queue
+#
+# Author: Bernd Dammann <bd@cc.dtu.dk>
+#
+#BSUB -J mm_batch
+#BSUB -o mm_batch_%J.out
+#BSUB -q hpcintro
+#BSUB -n 1
+#BSUB -R "rusage[mem=2048]"
+#BSUB -R "select[model == XeonE5_2650v4]"
+#BSUB -W 30
+# uncomment the following line, if you want to assure that your job has
+# a whole CPU for itself (shared L3 cache)
+#BSUB -R "span[hosts=1] affinity[socket(1)]"
+
+# define the name of this job, e.g. static / dynamic / whatever that describes it
+NAME="example"
+
+# define the executable
+EXECUTABLES="poisson_j poisson_gs"
+
+# define the grid sizes
+SIZES="10 15 20 30 50 70 100 150 200"
+
+# define the thread nums
+THREADS="1 2 4 8 16 24"
+
+# define properties
+ITERATIONS=100
+TOLERANCE=0.001
+START_T=0.0
+
+# enable(1)/disable(0) result checking
+export MATMULT_COMPARE=0
+
+CC=${1-"gcc"}
+LOGEXT=dat
+
+# start the collect command with the above settings
+
+for EXE in $EXECUTABLES
+do
+    for THREAD in $THREADS
+    do
+        rm -f ${NAME}_${EXE}_${THREAD}.$LOGEXT # remove existing log files
+        export OMP_NUM_THREADS=$THREAD
+        for S in $SIZES
+        do
+            # the script will dump the results into .dat files, one for each executable and thread count
+            # in the following order (columns):
+            # size | memory footprint | initialization time | calculation time | Mlups
+            ./$EXE $S $ITERATIONS $TOLERANCE $START_T | grep -v CPU >> ${NAME}_${EXE}_${THREAD}.$LOGEXT
+        done
+    done
+done
