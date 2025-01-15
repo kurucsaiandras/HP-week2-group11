@@ -31,6 +31,8 @@ main(int argc, char *argv[]) {
     double 	***u = NULL;
     double 	***f = NULL;
 
+    double MIN_RUNTIME = 3.0; // in seconds
+
 
     /* get the paramters from the command line */
     N         = atoi(argv[1]);	// grid size
@@ -45,7 +47,7 @@ main(int argc, char *argv[]) {
     double cpu_time_prep = 0.0;
     double cpu_time_calc = 0.0;
     int reps = 0;
-    while(cpu_time_prep + cpu_time_calc < 10.0) { // run for at least 10 seconds
+    while(cpu_time_prep + cpu_time_calc < MIN_RUNTIME) { // run for at least minimum runtime
         // --------Initialization-----------
 
         // Measure preparation time
@@ -98,7 +100,15 @@ main(int argc, char *argv[]) {
     // Calculate lups
     double Mlups = (double)N * N * N * iter_max * reps / cpu_time_calc / 1e6;
 
-    printf("%f\t%f\t%f\n", cpu_time_prep / reps, cpu_time_calc / reps, Mlups);
+    // Calculate memory footprint
+    #ifdef _JACOBI
+    int mem_footprint = N * N * N * 3 * 8;
+    #endif
+    #ifdef _GAUSS_SEIDEL
+    int mem_footprint = N * N * N * 2 * 8;
+    #endif
+
+    printf("%d\t%d\t%f\t%f\t%f\n", N, mem_footprint, cpu_time_prep / reps, cpu_time_calc / reps, Mlups);
 
     // dump  results if wanted 
     switch(output_type) {
