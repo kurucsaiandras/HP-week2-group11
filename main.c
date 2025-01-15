@@ -28,6 +28,7 @@ main(int argc, char *argv[]) {
     char        *output_ext    = "";
     char	output_filename[FILENAME_MAX];
     double 	***u = NULL;
+    double 	***f = NULL;
 
 
     /* get the paramters from the command line */
@@ -44,13 +45,26 @@ main(int argc, char *argv[]) {
         perror("array u: allocation failed");
         exit(-1);
     }
+    init_u(u, N, start_T);
+    if ( (f = malloc_3d(N, N, N)) == NULL ) {
+        perror("array f: allocation failed");
+        exit(-1);
+    }
+    init_f(f, N);
 
-    /*
-     *
-     * fill in your code here 
-     *
-     *
-     */
+    #ifdef _JACOBI
+    double 	***u_2 = NULL;
+    if ( (u_2 = malloc_3d(N, N, N)) == NULL ) {
+        perror("array u_2: allocation failed");
+        exit(-1);
+    }
+    init_u(u_2, N, start_T);
+    jacobi(f, u, u_2, N, iter_max, tolerance);
+    #endif
+
+    #ifdef _GAUSS_SEIDEL
+    gauss_seidel(f, u, N, iter_max, tolerance);
+    #endif
 
     // dump  results if wanted 
     switch(output_type) {

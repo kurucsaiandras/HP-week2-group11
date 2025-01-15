@@ -3,6 +3,10 @@
 
 double ***malloc_3d(int m, int n, int k);
 
+void init_u(double ***u, int N, double start_T);
+
+void init_f(double ***f, int N);
+
 #define HAS_FREE_3D
 void free_3d(double ***array3D);
 
