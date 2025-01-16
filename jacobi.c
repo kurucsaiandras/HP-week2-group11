@@ -2,6 +2,7 @@
  * 
  */
 #include <math.h>
+#include <stdio.h>
 
 void
 jacobi(double ***f, double ***u, double ***u_2, int N, int iter_max, double tolerance) {

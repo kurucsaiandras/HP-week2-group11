@@ -2,6 +2,7 @@
  *
  */
 #include <math.h>
+#include <stdio.h>
 
 void
 gauss_seidel(double *** f, double *** u, int N, int iter_max, double tolerance) {

@@ -108,7 +108,7 @@ main(int argc, char *argv[]) {
     int mem_footprint = N * N * N * 2 * 8;
     #endif
 
-    printf("%d\t%d\t%f\t%f\t%f\n", N, mem_footprint, cpu_time_prep / reps, cpu_time_calc / reps, Mlups);
+    printf("%d\t%d\t%f\t%f\t%f\n", omp_get_max_threads(), mem_footprint, cpu_time_prep / reps, cpu_time_calc / reps, Mlups);
 
     // dump  results if wanted 
     switch(output_type) {

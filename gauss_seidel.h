@@ -4,6 +4,7 @@
 #ifndef _GAUSS_SEIDEL_H
 #define _GAUSS_SEIDEL_H
 
-gauss_seidel(double ***, double ***, int, int, double);
+void
+gauss_seidel(double *** f, double *** u, int N, int iter_max, double tolerance);
 
 #endif
