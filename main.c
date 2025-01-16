@@ -31,9 +31,6 @@ main(int argc, char *argv[]) {
     double 	***u = NULL;
     double 	***f = NULL;
 
-    double MIN_RUNTIME = 3.0; // in seconds
-
-
     /* get the paramters from the command line */
     N         = atoi(argv[1]);	// grid size
     iter_max  = atoi(argv[2]);  // max. no. of iterations
@@ -43,62 +40,52 @@ main(int argc, char *argv[]) {
 	output_type = atoi(argv[5]);  // ouput type
     }
 
-    double start;
-    double cpu_time_prep = 0.0;
-    double cpu_time_calc = 0.0;
-    int reps = 0;
-    while(cpu_time_prep + cpu_time_calc < MIN_RUNTIME) { // run for at least minimum runtime
-        // --------Initialization-----------
 
-        // Measure preparation time
-        
-        start = omp_get_wtime();
-
-        // allocate memory
-        if ( (u = malloc_3d(N+2, N+2, N+2)) == NULL ) {
-            perror("array u: allocation failed");
-            exit(-1);
-        }
-        init_u(u, N+2, start_T);
-        if ( (f = malloc_3d(N+2, N+2, N+2)) == NULL ) {
-            perror("array f: allocation failed");
-            exit(-1);
-        }
-        init_f(f, N+2);
-
-        #ifdef _JACOBI
-        double 	***u_2 = NULL;
-        if ( (u_2 = malloc_3d(N+2, N+2, N+2)) == NULL ) {
-            perror("array u_2: allocation failed");
-            exit(-1);
-        }
-        init_u(u_2, N+2, start_T);
-        #endif
-
-        cpu_time_prep += omp_get_wtime() - start;
-        start = omp_get_wtime();
-
-        // --------Calculation-----------
-        #ifdef _JACOBI
-        jacobi(f, u, u_2, N+2, iter_max, tolerance);
-        #endif
-
-        #ifdef _GAUSS_SEIDEL
-        gauss_seidel(f, u, N+2, iter_max, tolerance);
-        #endif
-        cpu_time_calc += omp_get_wtime() - start;
-        reps++;
-
-        // de-allocate memory
-        free_3d(u);
-        #ifdef _JACOBI
-        free_3d(u_2);
-        #endif
-        free_3d(f);
+    // allocate memory
+    if ( (u = malloc_3d(N+2, N+2, N+2)) == NULL ) {
+        perror("array u: allocation failed");
+        exit(-1);
+    }
+    if ( (f = malloc_3d(N+2, N+2, N+2)) == NULL ) {
+        perror("array f: allocation failed");
+        exit(-1);
     }
 
+    #ifdef _JACOBI
+    double 	***u_2 = NULL;
+    if ( (u_2 = malloc_3d(N+2, N+2, N+2)) == NULL ) {
+        perror("array u_2: allocation failed");
+        exit(-1);
+    }
+    #endif
+
+    double start = omp_get_wtime();
+
+    // --------Initialization-----------
+    init_u(u, N+2, start_T);
+    init_f(f, N+2);
+    #ifdef _JACOBI
+    init_u(u_2, N+2, start_T);
+    #endif
+
+    #pragma omp parallel default(none) shared(f, u, u_2, N, iter_max, tolerance, start_T)
+    {
+
+    // --------Calculation-----------
+    #ifdef _JACOBI
+    jacobi(f, u, u_2, N+2, iter_max, tolerance);
+    #endif
+
+    #ifdef _GAUSS_SEIDEL
+    gauss_seidel(f, u, N+2, iter_max, tolerance);
+    #endif
+
+    }
+
+    double elapsed_time = omp_get_wtime() - start;
+
     // Calculate lups
-    double Mlups = (double)N * N * N * iter_max * reps / cpu_time_calc / 1e6;
+    double Mlups = (double)N * N * N * iter_max / elapsed_time / 1e6;
 
     // Calculate memory footprint
     #ifdef _JACOBI
@@ -108,7 +95,7 @@ main(int argc, char *argv[]) {
     int mem_footprint = N * N * N * 2 * 8;
     #endif
 
-    printf("%d\t%d\t%f\t%f\t%f\n", omp_get_max_threads(), mem_footprint, cpu_time_prep / reps, cpu_time_calc / reps, Mlups);
+    printf("%d\t%d\t%f\t%f\n", omp_get_max_threads(), mem_footprint, elapsed_time, Mlups);
 
     // dump  results if wanted 
     switch(output_type) {
@@ -131,6 +118,13 @@ main(int argc, char *argv[]) {
 	    fprintf(stderr, "Non-supported output type!\n");
 	    break;
     }
+
+    // de-allocate memory
+    free_3d(u);
+    #ifdef _JACOBI
+    free_3d(u_2);
+    #endif
+    free_3d(f);
 
     return(0);
 }
